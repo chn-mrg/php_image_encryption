@@ -1,17 +1,22 @@
 <?php
     require_once 'encryptImageClass.php';
     use encryptImageClass\encryptImageClass;
-    $encryptImageClass = new encryptImageClass();
+    $encryptImageClass = new encryptImageClass(512);
+
 //    $key = [
 //        "privateKey"=>"", //私钥
 //        "publicKey"=>"" //公钥
 //    ];
-//    $encryptImageClass->setPrivateKey($key["privateKey"]); //自定义私钥
-//    $encryptImageClass->setPublicKey($key["publicKey"]); //自定义私钥
+//    $encryptImageClass->setKey($key["privateKey"],$key["publicKey"]);
+//    echo $encryptImageClass->getPrivateKey();
+//    echo $encryptImageClass->getPublicKey();
     $imageUlr = "https://www.baidu.com/img/PCtm_d9c8750bed0b3c7d089fa7d55720d6cf.png";
     $filePath = "image/test";
     $publicKey = base64_encode($encryptImageClass->getPublicKey());
-    $fileData = $encryptImageClass->encryptImage($imageUlr)->privateEncrypt("|{huhuhuhu}|")->saveFile($filePath);
+    $img1 = $encryptImageClass->encryptImage($imageUlr);
+    $img1->privateEncrypt();
+    $fileData = $img1->saveFile($filePath);
+
 ?>
 
 <!DOCTYPE html>
@@ -21,7 +26,7 @@
     <title>Title</title>
 </head>
 <body>
-<img id="img" alt="" data-src="/<?=$filePath?>" src="">
+<img id="img" alt="" data-src="/<?=$fileData["filePath"]?>" src="">
 </body>
 <script src="js/jsencrypt.js"></script>
 <script>

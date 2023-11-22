@@ -1,16 +1,27 @@
 <?php
 
 namespace encryptImageClass;
+use Exception;
+
 class encryptImageClass
 {
     private $privateKey,$publicKey;
     private $imageBase64;
     private $encryptData;
+    private $imageSize;
 
     /* __construct 构造函数
      * @private_key_bits 密钥长度
      */
     public function __construct($privateKeyBits=512){
+        $this->refreshClass($privateKeyBits);
+    }
+
+    /* refreshClass 刷新初始化本方法
+     * @private_key_bits 密钥长度
+     */
+    public function refreshClass($privateKeyBits=512){
+        $this->privateKey = $this->publicKey = $this->imageBase64 = $this->encryptData = $this->imageSize = "";
         $config = array(
             "digest_alg"    => "sha512",
             "private_key_bits" => $privateKeyBits,
@@ -21,20 +32,44 @@ class encryptImageClass
         $publicKey = openssl_pkey_get_details($res)["key"];
         $this->setPrivateKey($privateKey);
         $this->setPublicKey($publicKey);
+        return $this;
+    }
+
+
+    public function setKey($privateKey,$publicKey){
+        $password = "testKey";
+        if (!@openssl_private_encrypt($password, $encrypted, $privateKey))
+        {
+            throw new Exception("privateKey error," . openssl_error_string());
+        }
+        if (!@openssl_public_decrypt($encrypted, $decrypted, $publicKey))
+        {
+            throw new Exception("publicKey error," . openssl_error_string());
+        }
+        if($password == $decrypted){
+            $this->setPrivateKey($privateKey);
+            $this->setPublicKey($publicKey);
+            return $this;
+        }else{
+            throw new Exception("Keys not true");
+        }
+
     }
 
     /* setPrivateKey 写入私钥
      *  @privateKey 私钥
      */
-    public function setPrivateKey($privateKey){
+    private function setPrivateKey($privateKey){
         $this->privateKey = $privateKey;
+        return $this;
     }
 
     /* setPublicKey 写入公钥
      *  @publicKey 公钥
      */
-    public function setPublicKey($publicKey){
+    private function setPublicKey($publicKey){
         $this->publicKey = $publicKey;
+        return $this;
     }
 
     /* getPrivateKey 获取私钥
@@ -88,10 +123,10 @@ class encryptImageClass
         $imageEncrypt = "";
         foreach ($imageData as $key => $encryptItem)
         {
-            $isEncrypted = openssl_private_encrypt($encryptItem, $encrypted, $this->privateKey);
+            $isEncrypted = @openssl_private_encrypt($encryptItem, $encrypted, $this->privateKey);
             if (!$isEncrypted)
             {
-                throw new Exception('privateKey error,' . openssl_error_string());
+                throw new Exception("privateKey error," . openssl_error_string());
             }
             $imageEncrypt .= ($key==0?"":$delimiter).base64_encode($encrypted);
         }
@@ -110,10 +145,10 @@ class encryptImageClass
         $imageEncrypt = "";
         foreach ($imageData as $key => $encryptItem)
         {
-            $isEncrypted = openssl_public_encrypt($encryptItem, $encrypted, $this->publicKey);
+            $isEncrypted = @openssl_public_encrypt($encryptItem, $encrypted, $this->publicKey);
             if (!$isEncrypted)
             {
-                throw new Exception('privateKey error,' . openssl_error_string());
+                throw new Exception("privateKey error," . openssl_error_string());
             }
             $imageEncrypt .= ($key==0?"":$delimiter).base64_encode($encrypted);
         }
@@ -135,6 +170,7 @@ class encryptImageClass
      *
      */
     public function saveFile($filePath){
+        $filePath .= ".".$this->getImageSize("type");
         $file = fopen($filePath,"w");
         if ($file){
             $encryptData = $this->encryptData;
@@ -145,15 +181,21 @@ class encryptImageClass
                 "delimiter"=>$encryptData["delimiter"]
             ];
         }else{
-            exit("Err: write file fail");
+            throw new Exception("Err: write file fail");
         }
+    }
+
+    public function getImageSize($type = false){
+        $imageSize = $this->imageSize;
+        $imageSize["type"] = substr($imageSize["mime"],strripos($imageSize["mime"],"/")+1);
+        return $type?$imageSize[$type]:$imageSize;
     }
 
     /* getImageBase64 获取图片base64
      * @imageFile array[imageData 图片数据,imageSize 图片大小]
      */
     private function getImageBase64($imageFile){
-        return "data:{$imageFile["imageSize"]["mime"]};base64,".chunk_split(base64_encode($imageFile["imageData"]));
+        return "data:{$this->imageSize["mime"]};base64,".chunk_split(base64_encode($imageFile));
     }
 
     /* getImgFile 获取图片文件
@@ -162,12 +204,10 @@ class encryptImageClass
     private function getImgFile($imagePath){
         $imageSize = @getimagesize($imagePath);
         if($imageSize){
-            return [
-                "imageData"=>file_get_contents($imagePath),
-                "imageSize"=>$imageSize
-            ];
+            $this->imageSize = $imageSize;
+            return file_get_contents($imagePath);
         }else{
-            exit("Err: Url:\"{$imagePath}\" is not image");
+            throw new Exception("Err: Url:\"{$imagePath}\" is not image");
         }
     }
 
