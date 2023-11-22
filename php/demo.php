@@ -75,10 +75,9 @@
         for(var i = 0; i < byteString.length; i++) {
             ia[i] = byteString.charCodeAt(i);
         }
-        var blob = new Blob([ia], {
+        return new Blob([ia], {
             type: mimeString
         });
-        return blob;
     }
     getPublicKey(getImg);
 
