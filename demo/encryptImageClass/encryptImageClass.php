@@ -17,7 +17,7 @@ class encryptImageClass
         $this->refreshClass($privateKeyBits);
     }
 
-    /* refreshClass 刷新初始化本方法
+    /* refreshClass 刷新初始化本类
      * @private_key_bits 密钥长度
      */
     public function refreshClass($privateKeyBits=512){

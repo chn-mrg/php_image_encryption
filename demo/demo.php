@@ -1,7 +1,8 @@
 <?php
-    require_once 'encryptImageClass.php';
-    use encryptImageClass\encryptImageClass;
-    $encryptImageClass = new encryptImageClass(512);
+require_once 'encryptImageClass\encryptImageClass.php';
+use encryptImageClass\encryptImageClass;
+
+$encryptImageClass = new encryptImageClass(512);
 
 //    $key = [
 //        "privateKey"=>"", //私钥
